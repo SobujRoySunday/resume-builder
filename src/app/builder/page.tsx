@@ -5,6 +5,8 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { generateResumePDF } from "@/utils/pdfGenerator"; // Make sure this utility exists
 import { ResumeData } from "@/lib/resumeData"; // Assuming this contains the `ResumeData` type
 import { RxCross2 } from "react-icons/rx";
+import { FaDownload } from "react-icons/fa";
+import { FaEye } from "react-icons/fa6";
 
 export default function ResumeBuilder() {
     const { register, control, handleSubmit } = useForm<ResumeData>({
@@ -186,7 +188,8 @@ export default function ResumeBuilder() {
                     </button>
                 </div>
 
-                <button type="submit" className="bg-foreground text-background px-4 py-2 rounded hover:bg-gray-800 transition">
+                <button type="submit" className="bg-foreground text-background px-4 py-2 rounded hover:bg-gray-800 transition flex justify-center items-center">
+                    <FaEye className="mr-2" />
                     Preview
                 </button>
             </form>
@@ -285,7 +288,10 @@ export default function ResumeBuilder() {
                         )}
                     </div>
 
-                    <button onClick={downloadPDF} className="w-full bg-green-500 text-white p-2 mt-4">Download as PDF</button>
+                    <button onClick={downloadPDF} className="mt-4 bg-foreground text-background px-4 py-2 rounded hover:bg-gray-800 transition w-full flex justify-center items-center">
+                        <FaDownload className="mr-2" />
+                        Download as PDF
+                    </button>
                 </div>
             )}
         </div>
