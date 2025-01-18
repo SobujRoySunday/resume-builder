@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { generateResumePDF } from "@/utils/pdfGenerator"; // Make sure this utility exists
-import { ResumeData } from "@/lib/resumeData"; // Assuming this contains the `ResumeData` type
+import { generateResumePDF } from "@/utils/pdfGenerator";
+import { ResumeData } from "@/lib/resumeData";
 import { RxCross2 } from "react-icons/rx";
-import { FaDownload } from "react-icons/fa";
 import { FaEye } from "react-icons/fa6";
+import PdfEmbedder from "./PdfViewer";
 
 export default function ResumeBuilder() {
     const { register, control, handleSubmit } = useForm<ResumeData>({
@@ -20,38 +20,37 @@ export default function ResumeBuilder() {
             hobbies: [],
         },
     });
-
     const { fields: experienceFields, append: appendExperience, remove: removeExperience } = useFieldArray({
         control,
         name: "experience",
     });
-
     const { fields: educationFields, append: appendEducation, remove: removeEducation } = useFieldArray({
         control,
         name: "education",
     });
-
     const { fields: skillFields, append: appendSkill, remove: removeSkill } = useFieldArray({
         control,
         name: "skills",
     });
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [resumeData, setResumeData] = useState<ResumeData | null>(null);
 
-    const [resumeData, setResumeData] = useState<ResumeData | null>(null); // Store resume data for preview and PDF download
-
-    const onSubmit = (data: ResumeData) => {
-        setResumeData(data); // Save form data to state for preview and PDF
+    const onSubmit = async (data: ResumeData) => {
+        setResumeData(data);
     };
 
-    const downloadPDF = async () => {
+    const previewPDF = async () => {
         if (resumeData) {
             const pdfBytes = await generateResumePDF(resumeData);
             const blob = new Blob([pdfBytes], { type: "application/pdf" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "resume.pdf";
-            link.click();
+            const url = URL.createObjectURL(blob);
+            setPdfUrl(url);
         }
-    };
+    }
+
+    useEffect(() => {
+        previewPDF();
+    }, [resumeData])
 
     return (
         <div className="w-2/3 mx-auto p-8 flex flex-col items-center gap-4">
@@ -62,13 +61,11 @@ export default function ResumeBuilder() {
                     <label className="block text-xs text-gray-500">Full Name</label>
                     <input {...register("name")} className="w-full p-2 border rounded" />
                 </div>
-
                 {/* Email */}
                 <div className="space-y-2">
                     <label className="block text-xs text-gray-500">Email</label>
                     <input {...register("email")} className="w-full p-2 border rounded" />
                 </div>
-
                 {/* Experience */}
                 <div className="space-y-2">
                     <label className="block text-xs text-gray-500">Experience</label>
@@ -111,7 +108,6 @@ export default function ResumeBuilder() {
                         Add Experience
                     </button>
                 </div>
-
                 {/* Education */}
                 <div className="space-y-2">
                     <label className="block text-xs text-gray-500">Education</label>
@@ -154,7 +150,6 @@ export default function ResumeBuilder() {
                         Add Education
                     </button>
                 </div>
-
                 {/* Skills */}
                 <div className="space-y-2">
                     <label className="block text-xs text-gray-500">Skills</label>
@@ -187,113 +182,13 @@ export default function ResumeBuilder() {
                         Add Skill
                     </button>
                 </div>
-
                 <button type="submit" className="bg-foreground text-background px-4 py-2 rounded hover:bg-gray-800 transition flex justify-center items-center">
                     <FaEye className="mr-2" />
                     Preview
                 </button>
             </form>
 
-            {resumeData && (
-                <div className="mt-6 p-4 border rounded-md w-full">
-                    <h2 className="font-bold text-xl">Preview</h2>
-                    <div>
-                        <p><strong>Name:</strong> {resumeData.name}</p>
-                        <p><strong>Email:</strong> {resumeData.email}</p>
-
-                        <div>
-                            <strong>Experience:</strong>
-                            <ul>
-                                {resumeData.experience.map((exp, index) => (
-                                    <li key={index}>
-                                        <p><strong>Job Title:</strong> {exp.jobTitle}</p>
-                                        <p><strong>Company:</strong> {exp.company}</p>
-                                        <p><strong>Duration:</strong> {exp.startDate} - {exp.endDate}</p>
-                                        <p><strong>Description:</strong> {exp.description}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <div>
-                            <strong>Education:</strong>
-                            <ul>
-                                {resumeData.education.map((edu, index) => (
-                                    <li key={index}>
-                                        <p><strong>Degree:</strong> {edu.degree}</p>
-                                        <p><strong>Institution:</strong> {edu.institution}</p>
-                                        <p><strong>Duration:</strong> {edu.startDate} - {edu.endDate}</p>
-                                        <p><strong>Description:</strong> {edu.description}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <div>
-                            <strong>Skills:</strong>
-                            <ul>
-                                {resumeData.skills.map((skill, index) => (
-                                    <li key={index}>{skill.name} : {skill.level}</li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {resumeData.projects && resumeData.projects.length > 0 && (
-                            <div>
-                                <strong>Projects:</strong>
-                                <ul>
-                                    {resumeData.projects.map((project, index) => (
-                                        <li key={index}>
-                                            <p><strong>Title:</strong> {project.title}</p>
-                                            <p><strong>Description:</strong> {project.description}</p>
-                                            {project.url && <p><strong>URL:</strong> <a href={project.url} target="_blank" rel="noopener noreferrer">{project.url}</a></p>}
-                                            <p><strong>Technologies:</strong> {project.technologies.join(", ")}</p>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        {resumeData.languages && resumeData.languages.length > 0 && (
-                            <div>
-                                <strong>Languages:</strong>
-                                <ul>
-                                    {resumeData.languages.map((language, index) => (
-                                        <li key={index}>{language}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        {resumeData.certifications && resumeData.certifications.length > 0 && (
-                            <div>
-                                <strong>Certifications:</strong>
-                                <ul>
-                                    {resumeData.certifications.map((cert, index) => (
-                                        <li key={index}>{cert}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        {resumeData.hobbies && resumeData.hobbies.length > 0 && (
-                            <div>
-                                <strong>Hobbies:</strong>
-                                <ul>
-                                    {resumeData.hobbies.map((hobby, index) => (
-                                        <li key={index}>{hobby}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
-
-                    <button onClick={downloadPDF} className="mt-4 bg-foreground text-background px-4 py-2 rounded hover:bg-gray-800 transition w-full flex justify-center items-center">
-                        <FaDownload className="mr-2" />
-                        Download as PDF
-                    </button>
-                </div>
-            )}
+            {pdfUrl && <PdfEmbedder pdfUrl={pdfUrl} />}
         </div>
     );
 }
