@@ -7,7 +7,6 @@ export const generateResumePDF = async (resumeData: ResumeData) => {
   const { height, width } = page.getSize();
   const font = await pdfDoc.embedFont("Helvetica");
   const boldFont = await pdfDoc.embedFont("Helvetica-Bold");
-  const titleFont = await pdfDoc.embedFont("Helvetica-Bold");
 
   let currentY = height - 28 - 16;
 
